@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink, FileText, Loader2, Search } from "lucide-react";
-import { appleUrl, lastDay, todayUtc, type Deal, type ShowPreview } from "@/lib/contracts/types";
+import { appleUrl, lastDay, pointsOf, sameAddress, todayUtc, wei, type Deal, type ShowPreview } from "@/lib/contracts/types";
 import { useWallet } from "@/lib/genlayer/wallet";
 import { useProofWrite } from "@/lib/hooks/useReadProof";
 import { Button } from "./ui/button";
@@ -16,7 +16,7 @@ const EXAMPLES = [
 
 /** Look at a show's latest episodes before paying for a transaction: what its feed, Apple and its transcripts say. */
 export function EpisodeCheck({ deals, onBook }: { deals: Deal[]; onBook: (p: { feed: string; apple: string; brand: string; code: string }) => void }) {
-  const { isConnected } = useWallet();
+  const { isConnected, address } = useWallet();
   const { write, pending } = useProofWrite();
   const [feed, setFeed] = useState(EXAMPLES[0].feed);
   const [brand, setBrand] = useState(EXAMPLES[0].brand);
@@ -43,7 +43,11 @@ export function EpisodeCheck({ deals, onBook }: { deals: Deal[]; onBook: (p: { f
   };
 
   const norm = (u: string) => u.trim().toLowerCase().replace(/^https?:\/\/(www\.)?/, "").replace(/\/+$/, "");
-  const openDeals = deals.filter((d) => show && norm(d.feed) === norm(show.feed) && d.state === "open" && todayUtc() <= lastDay(d));
+  // Deals on this show that can still pay a read: open, inside their submission period, with a slot left. The
+  // connected wallet's own deals first, then the newest.
+  const openDeals = deals
+    .filter((d) => show && norm(d.feed) === norm(show.feed) && d.state === "open" && todayUtc() <= lastDay(d) && wei(d.budget) >= wei(d.price))
+    .sort((a, b) => Number(sameAddress(b.sponsor, address)) - Number(sameAddress(a.sponsor, address)) || Number(b.id.split("_")[1]) - Number(a.id.split("_")[1]));
 
   return (
     <div className="brand-card p-5 space-y-4">
@@ -124,18 +128,30 @@ export function EpisodeCheck({ deals, onBook }: { deals: Deal[]; onBook: (p: { f
                 <p className="font-medium">{e.title}</p>
                 {e.excerpt && <p className="text-xs text-muted-foreground">&ldquo;…{e.excerpt}…&rdquo;</p>}
                 {isConnected && openDeals.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {openDeals.map((d) => (
-                      <Button
-                        key={d.id}
-                        size="sm"
-                        variant="outline"
-                        disabled={!!pending}
-                        onClick={() => write({ kind: "deliver", dealId: d.id, guid: e.guid })}
-                      >
-                        {pending === `deliver:${d.id}|${e.guid}` && <Loader2 className="w-4 h-4 animate-spin" />} Submit to {d.id} ({d.brand})
-                      </Button>
-                    ))}
+                  <div className="space-y-1.5 pt-1">
+                    <p className="text-xs text-muted-foreground">Submit this episode to a deal on this show (its brand and points must be in the read):</p>
+                    {openDeals.map((d) => {
+                      const mine = sameAddress(d.sponsor, address);
+                      const left = Number(wei(d.budget) / (wei(d.price) || 1n));
+                      return (
+                        <Button
+                          key={d.id}
+                          size="sm"
+                          variant={mine ? "default" : "outline"}
+                          className="h-auto w-full justify-start whitespace-normal py-1.5 text-left"
+                          disabled={!!pending}
+                          onClick={() => write({ kind: "deliver", dealId: d.id, guid: e.guid })}
+                        >
+                          {pending === `deliver:${d.id}|${e.guid}` && <Loader2 className="w-4 h-4 animate-spin" />}
+                          <span>
+                            {mine ? "Your deal " : ""}
+                            {d.id}: {d.brand} · {left} slot{left === 1 ? "" : "s"} left
+                            {pointsOf(d).length ? ` · points: ${pointsOf(d).join("; ")}` : ""}
+                            {d.code ? ` · code ${d.code}` : ""}
+                          </span>
+                        </Button>
+                      );
+                    })}
                   </div>
                 )}
               </li>
