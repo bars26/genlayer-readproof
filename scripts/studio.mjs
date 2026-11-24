@@ -34,6 +34,14 @@ export async function rpc(method, params) {
 }
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// GenLayer Studio (since 2026-11-24) needs a fee distribution with every transaction (genlayer-js 2.0): time each
+// validator phase may take, in seconds; reading a feed, Apple and a transcript gets more.
+const TIME = { open_deal: 300n, deliver: 400n, confirm: 300n, dispute: 400n, claim: 200n };
+export async function feesFor(c, functionName) {
+  const est = await c.estimateTransactionFees({ leaderTimeunitsAllocation: TIME[functionName] ?? 120n, validatorTimeunitsAllocation: TIME[functionName] ?? 120n });
+  return { distribution: est.distribution, feeValue: est.feeValue };
+}
 export const log = [];
 const TRANSIENT = /rate limit|Unexpected token '<'|not valid JSON|fetch failed|ECONNRESET|socket hang up|50[234]/i;
 
@@ -44,7 +52,7 @@ export async function write(c, who, functionName, args, value = 0n, { expectErro
     try {
       let hash;
       try {
-        hash = await c.writeContract({ address: CONTRACT, functionName, args, value });
+        hash = await c.writeContract({ address: CONTRACT, functionName, args, value, fees: await feesFor(c, functionName) });
       } catch (err) {
         // The RPC sometimes answers a send with an HTML error page. Only resend if the
         // nonce did not move; otherwise the first send went through and we pick it up.
@@ -135,7 +143,7 @@ export const field = (obj, name) => (obj instanceof Map ? obj.get(name) : obj[na
 // balances only when nothing touching the contract is in flight.
 export async function quiet() {
   let last = -1;
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 90; i++) {
     const txs = await rpc("sim_getTransactionsForAddress", [CONTRACT]);
     const busy = txs.filter((t) => t.status !== "FINALIZED" && t.status !== "CANCELED" && t.status !== "UNDETERMINED").length;
     if (busy === 0 && txs.length === last) return txs.length;
@@ -151,7 +159,7 @@ export async function reconcile(c, label) {
   const t = JSON.parse(await read(c, "totals"));
   const onChain = await balance(CONTRACT);
   const ok = BigInt(t.expected_balance) === onChain;
-  reconciliations.push({ label, pots: t.pots, reserved: t.reserved, held: t.held, owed: t.owed, expected: t.expected_balance, balance: onChain.toString(), ok });
-  console.log(`  reconcile (${label}): pots ${fmt(t.pots)} + reserved ${fmt(t.reserved)} + held ${fmt(t.held)} + credited ${fmt(t.owed)} = ${fmt(t.expected_balance)} GEN; contract balance ${fmt(onChain)} GEN ${ok ? "OK" : "MISMATCH"}`);
+  reconciliations.push({ label, budgets: t.budgets, reserved: t.reserved, held: t.held, owed: t.owed, expected: t.expected_balance, balance: onChain.toString(), ok });
+  console.log(`  reconcile (${label}): budgets ${fmt(t.budgets)} + reserved ${fmt(t.reserved)} + held ${fmt(t.held)} + credited ${fmt(t.owed)} = ${fmt(t.expected_balance)} GEN; contract balance ${fmt(onChain)} GEN ${ok ? "OK" : "MISMATCH"}`);
   if (!ok) throw new Error("balance mismatch");
 }
