@@ -1,0 +1,56 @@
+{
+  "network": "studio",
+  "contract": "0xB813297AbF3Ec4fDe08663EE6520F746cc983eDe",
+  "wallet": "0x4F80B5c475fcEd34fc9A07FfCcF39E1Adc1406bf",
+  "note": "MetaMask test of ReadProof from the production app (readproof-bars26.vercel.app) on GenLayer Studio, 2026-11-24 07:18-07:33 UTC, every transaction FINALIZED (each also paid Studio's fee distribution). The tester booked their own Gamut reads on Podnews Daily, first submitted an episode to the wrong deal (the demo deal that asks for a point the read lacks: refused, which led to a clearer submit list in the app), disputed one of the demo's held reads (dismissed), then submitted two real episodes to their own deal and confirmed one. totals() matched the contract balance afterwards (3.4 GEN).",
+  "steps": [
+    [
+      "Deposit 0.3 GEN (sent by the app before booking)",
+      "0.3 GEN",
+      "credited to the tester",
+      "0x32a6caef8d3e1ed43ece9bce5a43573aa0bd8f34af9ae11ea55b5ac5efef9e94"
+    ],
+    [
+      "Book reads: Gamut Podcast Network on Podnews Daily (feed + Apple 1325018583), 3 reads at 0.1 GEN, episodes published 2026-11-04 to 2026-12-24, standing 1 day",
+      "",
+      "deal_4 open; Apple listed the id with this exact feed",
+      "0x7262efce102d8f40d01005ae08675087cee89fa11906c9a793cd5acf0fd2685f"
+    ],
+    [
+      "Submit the 20 Nov episode to deal_2 by mistake (the demo deal asking for 'a free trial for new shows')",
+      "",
+      "read_7 INELIGIBLE points_missing: the read conveys no free trial; nothing reserved",
+      "0xfbd8dca6ba456dbd8ac911d4d16c633b439c06c78811fbc6f02919aef287f8e7"
+    ],
+    [
+      "Deposit the 0.05 GEN dispute stake (sent by the app)",
+      "0.05 GEN",
+      "credited",
+      "0xe30a88969738d1f5236ca38745d8b97d670cbb3cfb25a652af9b7fe95593b1ae"
+    ],
+    [
+      "Dispute read_3 (the demo's 23 Nov read, held)",
+      "",
+      "DISMISSED: read again, still a sponsor message with every point; the 0.05 GEN stake joined the show's price",
+      "0x7fd17d0e9484870696235202abf22d8545120a5c74070b787ac161a829d315ca"
+    ],
+    [
+      "Submit the 23 Nov episode 'Pierre Bouvard leaves Westwood One' to deal_4",
+      "",
+      "read_8 DELIVERED (Apple by guid, 3 mentions, every point); 0.1 GEN reserved until 2026-11-24 10:56 UTC",
+      "0x144219bf292f0c5c6c2b7d31b2f087dbde259b18ae63801e2dbed74803eee2f1"
+    ],
+    [
+      "Submit the 20 Nov episode 'Smell like the podcast you listen to' to deal_4",
+      "",
+      "read_9 DELIVERED; 0.1 GEN reserved",
+      "0xf4af2a297be9885743bf5a9321fc62dc6dc9068a168f6b93b2e2849a9a044430"
+    ],
+    [
+      "Confirm read_9",
+      "",
+      "awaiting_wallet: still in the feed, 3 mentions in the transcript; the feed declares no GenLayer wallet yet, so 0.1 GEN is held for the show",
+      "0x5738594844e41d5bc86010839584728307b25ebd4eb788f4906d924a6a36430e"
+    ]
+  ]
+}

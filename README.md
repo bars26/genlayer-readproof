@@ -74,6 +74,10 @@ quote and reconciliation is in [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md).
   a deal before its window and grace have passed.
 - `totals()` matched the contract's on-chain balance at **every** step, the last after the sponsor's withdrawal
   finalized.
+- **A MetaMask test from the live app** (`docs/ui-test.json`): the tester booked their own Gamut reads on Podnews Daily
+  (`deal_4`), submitted two real episodes (both DELIVERED) and confirmed one (held for the show's wallet); along the way
+  an episode sent to the wrong deal was refused (`points_missing`) and their dispute of a demo read was dismissed.
+  Eight transactions, all finalized; the books matched afterwards.
 
 ## Who can do what (and the attacks this blocks)
 
