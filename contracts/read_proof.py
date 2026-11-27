@@ -316,17 +316,21 @@ def apple_show(apple_id: str) -> tuple:
     show = next((r for r in results if isinstance(r, dict) and r.get("kind") == "podcast"), None)
     if not show:
         return "none", None
-    episodes = [{"guid": str(r.get("episodeGuid") or ""), "title": str(r.get("trackName") or "")[:200],
+    episodes = [{"guid": str(r.get("episodeGuid") or ""), "track": str(r.get("trackId") or ""),
+                 "title": str(r.get("trackName") or "")[:200],
                  "released": str(r.get("releaseDate") or "")[:19], "audio": str(r.get("episodeUrl") or "")[:500]}
                 for r in results if isinstance(r, dict) and r.get("kind") == "podcast-episode"]
     return "ok", {"feed": str(show.get("feedUrl") or ""), "name": str(show.get("collectionName") or "")[:160], "episodes": episodes}
 
 
+def _bare(u: str) -> str:
+    return (u or "").split("?")[0].split("#")[0].strip().lower()[:300]
+
+
 def _apple_match(episodes: list, guid: str, title: str, published: str, audio: str) -> dict:
     """Apple's record of the episode: by guid; else by the audio file's URL (some hosts give Apple another guid); else
     by title (one containing the other: Apple drops episode numbers) published within two days of the feed's date."""
-    def bare(u: str) -> str:
-        return (u or "").split("?")[0].strip().lower()
+    bare = _bare
 
     for e in episodes:
         if e["guid"] and e["guid"] == guid:
@@ -386,7 +390,8 @@ def read_delivery(feed: str, apple_id: str, guid: str, brand: str, code: str, po
     ep = _episode(f["items"], guid)
     if not ep:
         return {"state": "none"}
-    out = {"state": "ok", "facts": {"guid": guid, "title": ep["title"], "published": ep["published"], "show": f["title"]}}
+    out = {"state": "ok", "facts": {"guid": guid, "title": ep["title"], "published": ep["published"], "show": f["title"],
+                                    "audio": _bare(ep["audio"]), "wallet": f["wallet"]}}
     facts = out["facts"]
 
     def rule(verdict: str, code_: str) -> dict:
@@ -411,6 +416,8 @@ def read_delivery(feed: str, apple_id: str, guid: str, brand: str, code: str, po
     if not tr:
         return rule(UNCLEAR, "no_transcript")
     ts, body = _fetch(tr["url"], _MAX_TRANSCRIPT_BYTES)
+    if ts == "none":
+        return rule(INELIGIBLE, "transcript_gone")
     text = transcript_text(body, tr["type"]) if ts == "ok" else ""
     if len(text) < 200:
         return rule(UNCLEAR, "transcript_unreadable")
@@ -434,27 +441,28 @@ def read_delivery(feed: str, apple_id: str, guid: str, brand: str, code: str, po
     return rule(DELIVERED, "delivered")
 
 
-def recheck(feed: str, guid: str, brand: str, code: str) -> dict:
-    """Is the read still there? The episode is still in the feed under the same guid, its transcript still names the
-    sponsor (and carries the code), and the wallet the feed declares now. An unreadable feed or transcript decides
-    nothing ("error")."""
-    fs, f = read_feed(feed)
-    if fs != "ok":
-        return {"state": "error", "what": "feed"}
-    ep = _episode(f["items"], guid)
-    out = {"state": "ok", "in_feed": bool(ep), "wallet": f["wallet"], "mentions": 0, "code_found": not code}
-    if ep:
-        tr = _transcript(ep["transcripts"])
-        if tr:
-            ts, body = _fetch(tr["url"], _MAX_TRANSCRIPT_BYTES)
-            if ts == "error":
-                return {"state": "error", "what": "transcript"}
-            text = transcript_text(body, tr["type"]) if ts == "ok" else ""
-            pat = brand_pattern(brand)
-            out["mentions"] = len(pat.findall(text)) if pat and text else 0
-            out["code_found"] = (not code) or _alnum(code) in _alnum(text)
-    out["same"] = out["in_feed"] and out["mentions"] > 0 and out["code_found"]
-    return out
+def episode_keys(facts: dict) -> list:
+    """Everything that identifies the underlying episode a reading corroborated: the feed's guid, Apple's own episode id
+    and guid, the audio file (the feed's and Apple's), and the title on its publication day. A deal pays one read per
+    episode: a reading that shares any of these with an earlier delivered read is the same episode, whatever guid the
+    feed gives it now."""
+    keys = []
+
+    def add(kind: str, value: str) -> None:
+        value = (value or "").strip()
+        if value and f"{kind}:{value}" not in keys:
+            keys.append(f"{kind}:{value}")
+
+    add("guid", facts.get("guid", ""))
+    apple = facts.get("apple") or {}
+    add("apple", apple.get("track", ""))
+    add("guid", apple.get("guid", ""))
+    add("audio", facts.get("audio", ""))
+    add("audio", _bare(apple.get("audio", "")))
+    title = _norm_words(facts.get("title", "")).strip()
+    if len(title) >= 6 and facts.get("published"):
+        add("title", f"{title}|{facts['published'][:10]}")
+    return keys
 
 
 def show_check(feed: str, apple_id: str) -> dict:
@@ -504,6 +512,9 @@ CODE_TEXT = {
     "date_mismatch": "The feed's publication date and Apple's differ by more than two days",
     "no_transcript": "The episode lists no transcript in a format ReadProof reads",
     "transcript_unreadable": "The episode's transcript could not be read",
+    "transcript_gone": "The episode's transcript is no longer published (404)",
+    "already_delivered": "This episode already delivered a read for this deal, under another guid or record",
+    "different_episode": "The guid now points to a different episode than the one that was delivered",
     "no_mention": "The transcript never names the sponsor",
     "no_code": "The transcript does not carry the deal's promo code",
     "not_a_read": "The sponsor is named, but not in a sponsor message",
@@ -560,6 +571,7 @@ class Read:
     host_share: u256
     host_wallet: str
     reading_json: str
+    keys_json: str  # what identifies the delivered episode (see episode_keys)
     confirm_json: str
     disputed_by: str
     dispute_json: str
@@ -569,7 +581,7 @@ class Read:
 class ReadProof(_Contract):
     deals: TreeMap[str, Deal]
     reads: TreeMap[str, Read]
-    used: TreeMap[str, str]  # "deal_id|guid" -> the read id that delivered that episode
+    used: TreeMap[str, str]  # "deal_id|<episode key>" -> the read id that delivered that episode
     owed: TreeMap[str, u256]
     deal_count: u256
     read_count: u256
@@ -644,6 +656,8 @@ class ReadProof(_Contract):
     def _why(self, verdict: str, code: str, r: dict) -> str:
         f = r.get("facts") or {}
         text = f"{verdict}: {CODE_TEXT.get(code, code)}."
+        if r.get("earlier"):
+            text += f" (It delivered {r['earlier']}.)"
         if f.get("title"):
             text += f" \"{f['title'][:120]}\" ({f.get('show', '')[:60]}), published {f.get('published', '').replace('T', ' ')} UTC."
         j = r.get("judged") or {}
@@ -751,8 +765,8 @@ class ReadProof(_Contract):
         guid = self._text(guid)
         if not 1 <= len(guid) <= 300:
             raise _Err("guid must be the episode's <guid> in the feed")
-        if f"{d.id}|{guid}" in self.used:
-            raise _Err(f"This episode already delivered a read for this deal ({self.used[d.id + '|' + guid]})")
+        if f"{d.id}|guid:{guid}" in self.used:
+            raise _Err(f"This episode already delivered a read for this deal ({self.used[d.id + '|guid:' + guid]})")
         if int(d.budget) < int(d.price):
             raise _Err("Every slot of this deal is taken")
         feed, apple_id, brand, code = d.feed, d.apple_id, d.brand, d.code
@@ -769,6 +783,11 @@ class ReadProof(_Contract):
         f = r["facts"]
         verdict, code_ = r["verdict"], r["code"]
         read_id = f"read_{int(self.read_count)}"
+        keys = episode_keys(f) if verdict == DELIVERED else []
+        earlier = next((self.used[f"{d.id}|{k}"] for k in keys if f"{d.id}|{k}" in self.used), "")
+        if earlier:  # the same underlying episode, submitted again under another guid: no second slot
+            verdict, code_ = INELIGIBLE, "already_delivered"
+            r = dict(r, verdict=verdict, code=code_, earlier=earlier)
         held = ""
         if verdict == DELIVERED:
             held = _iso(_seconds(f["published"]) + int(d.survival_days) * _DAY)  # the episode must stand this long
@@ -778,7 +797,8 @@ class ReadProof(_Contract):
         rd = Read(id=read_id, deal_id=d.id, guid=guid, title=f.get("title", ""), published=f.get("published", ""),
                   submitter=gl.message.sender_address, verdict=verdict, code=code_, why=self._why(verdict, code_, r),
                   state=HELD if verdict == DELIVERED else REFUSED, held_until=held, price=u256(0), bonus=u256(0),
-                  host_share=u256(0), host_wallet="", reading_json=json.dumps(packet, sort_keys=True), confirm_json="",
+                  host_share=u256(0), host_wallet="", reading_json=json.dumps(packet, sort_keys=True),
+                  keys_json=json.dumps(keys), confirm_json="",
                   disputed_by="", dispute_json="", submitted_at=now)
         if verdict == DELIVERED:
             each = int(d.price)
@@ -788,7 +808,8 @@ class ReadProof(_Contract):
             self.budgets_total = _plus(self.budgets_total, -each)
             self.reserved_total = _plus(self.reserved_total, each)
             d.n_delivered = _plus(d.n_delivered, 1)
-            self.used[f"{d.id}|{guid}"] = read_id
+            for k in keys:
+                self.used[f"{d.id}|{k}"] = read_id
         d.n_submitted = _plus(d.n_submitted, 1)
         self._log(d, "submitted", read=read_id, verdict=verdict, code=code_)
         self.reads[read_id] = rd
@@ -799,37 +820,62 @@ class ReadProof(_Contract):
 
     @gl.public.write
     def confirm(self, read_id: str) -> str:
-        """Once the episode has stood `survival_days`, anyone confirms a delivered read: validators read the feed and the
-        transcript again. Still there, still naming the sponsor (with the code): the price (and any dismissed dispute's
-        stake) is credited to the GenLayer wallet the show's feed declares, or held for the show until it declares one.
-        Otherwise the price goes back to the deal's budget, or to the sponsor if the deal has closed."""
+        """Once the episode has stood `survival_days`, anyone confirms a delivered read: validators make the whole ruling
+        again on the episode as published now (the feed, Apple's directory, whatever transcript the episode lists now,
+        the sponsor, the code, and the model's reading: a sponsor message conveying every talking point), and check it
+        is still the episode that was delivered. A dismissed dispute or a changed transcript link skips none of this.
+        DELIVERED: the price (and any dismissed dispute's stake) is credited to the GenLayer wallet the show's feed
+        declares, or held for the show until it declares one. Anything else: the price goes back to the deal's budget
+        (or to the sponsor if the deal has closed), and a dismissed dispute's stake back to the disputer. An unreadable
+        source decides nothing."""
         rd = self._read(read_id)
         if rd.state != HELD:
             raise _Err("This read is not waiting for confirmation")
         if self._now() < rd.held_until:
             raise _Err(f"The read is confirmed from {rd.held_until.replace('T', ' ')} UTC")
         d = self.deals[rd.deal_id]
-        feed, guid, brand, code = d.feed, rd.guid, d.brand, d.code
+        feed, apple_id, guid, brand, code = d.feed, d.apple_id, rd.guid, d.brand, d.code
+        pts, start, end = json.loads(d.points_json), d.start, d.end
 
         def current() -> str:
-            return json.dumps(recheck(feed, guid, brand, code), sort_keys=True)
+            return json.dumps(read_delivery(feed, apple_id, guid, brand, code, pts, start, end), sort_keys=True)
 
         r = json.loads(gl.vm.run_nondet(current, _validator(current)))
-        if r["state"] != "ok":
-            raise _Err(f"The show's {r.get('what', 'feed')} could not be read right now; try again")
+        if r["state"] == "error" or (r["state"] == "ok" and r["code"] in ("apple_missing", "transcript_unreadable")):
+            raise _Err("The show's feed, Apple Podcasts or the transcript could not be read right now; try again")
+        delivered = json.loads(rd.reading_json).get("facts") or {}
+        f = r.get("facts") or {}
+        # Same episode as delivered: the guid is looked up, so it always "matches"; what must still match is something
+        # that corroborates the episode itself (Apple's episode id, the audio file, or the title on its day).
+        def corroborating(keys: list) -> set:
+            return {k for k in keys if not k.startswith("guid:")}
+
+        same_episode = r["state"] == "ok" and bool(corroborating(episode_keys(f)) & corroborating(json.loads(rd.keys_json or "[]")))
+        stands = r["state"] == "ok" and r["verdict"] == DELIVERED and same_episode
         r["read_at"] = self._now()
+        r["same_episode"] = same_episode
+        r["transcript_changed"] = (f.get("transcript") or {}).get("url", "") != (delivered.get("transcript") or {}).get("url", "")
+        if r["state"] == "none":
+            r["code"] = "gone_from_feed"
+        elif r["verdict"] == DELIVERED and not same_episode:
+            r["verdict"], r["code"] = INELIGIBLE, "different_episode"
+        r["stands"] = stands
         rd.confirm_json = json.dumps(r, sort_keys=True)
-        amount = int(rd.price) + int(rd.bonus)
-        self._release(d, amount)
-        if not r["same"]:
-            self._return(d, amount)
+        price, bonus = int(rd.price), int(rd.bonus)
+        self._release(d, price + bonus)
+        if not stands:
+            self._return(d, price)
+            if bonus:  # the read did not stand after all: the dismissed disputer gets the stake back
+                self._credit(Address(rd.disputed_by), bonus)
             rd.state = REVERTED
-            self._log(d, "reverted", read=rd.id, to="budget" if d.state == "open" else "sponsor")
+            self._log(d, "reverted", read=rd.id, code=r.get("code", ""), to="budget" if d.state == "open" else "sponsor")
             return REVERTED
+        amount = price + bonus
         rd.host_share = u256(amount)
-        if _wallet_ok(r["wallet"]):
-            rd.host_wallet = r["wallet"]
-            self._credit(Address(r["wallet"]), amount)
+        wallet = f.get("wallet", "")
+        if _wallet_ok(wallet):
+            rd.host_wallet = wallet
+            self._credit(Address(wallet), amount)
             d.paid_total = _plus(d.paid_total, amount)
             rd.state = PAID
         else:

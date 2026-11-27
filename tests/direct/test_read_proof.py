@@ -50,8 +50,8 @@ def _feed(items=None, wallet=None, description="A show about shows."):
 def _apple(episodes=None, feed=FEED):
     eps = episodes if episodes is not None else [{"guid": GUID, "title": "Episode 42: the week", "released": "2026-11-20T08:00:00Z"}]
     results = [{"kind": "podcast", "collectionName": "The Show", "feedUrl": feed}]
-    results += [{"kind": "podcast-episode", "episodeGuid": e.get("guid", ""), "trackName": e["title"], "releaseDate": e["released"],
-                 "episodeUrl": e.get("audio", "")} for e in eps]
+    results += [{"kind": "podcast-episode", "episodeGuid": e.get("guid", ""), "trackId": e.get("track", 1000000042), "trackName": e["title"],
+                 "releaseDate": e["released"], "episodeUrl": e.get("audio", "")} for e in eps]
     return {"resultCount": len(results), "results": results}
 
 
@@ -397,6 +397,115 @@ def test_disputes_need_a_held_read_a_stake_and_a_readable_episode(direct_vm, dir
     c.confirm(read_id)
     with direct_vm.expect_revert("Only a read waiting for confirmation"):
         c.dispute(read_id)
+
+
+# --- v1.1: confirmation makes the whole ruling again; one read per underlying episode ----------------------------------
+
+CODE_DEAL = dict(code="SHOW20")
+# The paid message removed, the brand and the code kept: a passing mention in the outro.
+NO_AD = _vtt(FILLER + "Thanks to everyone at Gamut Podcast Network for the coffee, SHOW20 was the room number. " + FILLER)
+
+
+def _delivered_with_code(vm, deploy, sponsor, host_side):
+    c, deal_id = _open(vm, deploy, sponsor, **CODE_DEAL)
+    return c, deal_id, _deliver(vm, c, deal_id, host_side)
+
+
+@pytest.mark.parametrize("setup, code", [
+    (dict(transcript=NO_AD, ad_read=False), "not_a_read"),  # brand and code still in the transcript, the sponsor message gone
+    (dict(points=(True, False)), "points_missing"),  # the read was recut and drops a paid talking point
+])
+def test_confirmation_judges_the_sponsor_message_again(direct_vm, direct_deploy, direct_alice, direct_bob, setup, code):
+    c, deal_id, read_id = _delivered_with_code(direct_vm, direct_deploy, direct_alice, direct_bob)
+    assert json.loads(c.check_text(NO_AD, "Gamut Podcast Network", "SHOW20"))["mentions"] == 1  # brand + code alone would pass
+    _setup(direct_vm, **setup)
+    assert c.confirm(read_id) == "reverted"
+    r = json.loads(c.get_read(read_id).confirm_json)
+    assert (r["verdict"], r["code"], r["stands"]) == ("INELIGIBLE", code, False)
+    d = c.get_deal(deal_id)
+    assert (int(d.budget), int(d.reserved), int(d.paid_total)) == (2 * PRICE, 0, 0)
+    _balance(c)
+
+
+@pytest.mark.parametrize("new_body, outcome", [
+    (NO_AD, "reverted"),  # the link now points at a transcript without the paid message: no payment
+    (_vtt(FILLER + READ + " " + FILLER), "paid"),  # a new link that still carries the read is judged the same way and pays
+])
+def test_a_changed_transcript_link_is_judged_too(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie, new_body, outcome):
+    c, deal_id, read_id = _delivered_with_code(direct_vm, direct_deploy, direct_alice, direct_bob)
+    new_url = "https://cdn.other-host.fm/ep42-v2.vtt"
+    feed = _feed([_item(transcripts=[(new_url, "text/vtt")])], wallet=to_hex(direct_charlie))
+    _setup(direct_vm, feed=feed, extra=[(new_url, new_body)], ad_read=outcome == "paid")
+    assert c.confirm(read_id) == outcome
+    r = json.loads(c.get_read(read_id).confirm_json)
+    assert r["transcript_changed"] is True and r["facts"]["transcript"]["url"] == new_url
+    assert _owed(c, direct_charlie) == (PRICE if outcome == "paid" else 0)
+    _balance(c)
+
+
+def test_a_dismissed_dispute_does_not_skip_the_confirmation_reading(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
+    c, deal_id, read_id = _delivered_with_code(direct_vm, direct_deploy, direct_alice, direct_bob)
+    _deposit(direct_vm, c, direct_charlie, PRICE // 10)
+    _setup(direct_vm)
+    direct_vm.sender = direct_charlie
+    assert c.dispute(read_id) == "DISMISSED"
+    assert _owed(c, direct_charlie) == 0 and int(c.get_read(read_id).bonus) == PRICE // 10
+    _setup(direct_vm, transcript=NO_AD, ad_read=False)  # after the dispute, the sponsor message is cut
+    direct_vm.sender = direct_bob
+    assert c.confirm(read_id) == "reverted"
+    assert _owed(c, direct_charlie) == PRICE // 10  # the read did not stand after all: the stake goes back to the disputer
+    d = c.get_deal(deal_id)
+    assert (int(d.budget), int(d.reserved), int(d.paid_total)) == (2 * PRICE, 0, 0)
+    _balance(c)
+
+
+FRESH = "ep-42-reupload"
+
+
+@pytest.mark.parametrize("item, apple_ep", [
+    # the host changed the guid; Apple still has the old one and matches by the audio file
+    (_item(guid=FRESH), {"guid": GUID, "title": "Episode 42: the week", "released": "2026-11-20T08:00:00Z", "audio": AUDIO}),
+    # new guid and a new audio URL; Apple matches by title, and it is Apple's same episode record
+    (_item(guid=FRESH, audio="https://cdn.example.fm/ep42-v2.mp3"),
+     {"guid": GUID, "title": "the week", "released": "2026-11-20T09:00:00Z"}),
+    # Apple re-ingested the episode under the new guid: same Apple episode id
+    (_item(guid=FRESH, audio="https://cdn.example.fm/ep42-v2.mp3"),
+     {"guid": FRESH, "title": "Episode 42: the week", "released": "2026-11-20T08:00:00Z"}),
+    # everything at Apple changed, but the feed's audio file is the one already delivered
+    (_item(guid=FRESH, title="Episode 42 (re-upload)"),
+     {"guid": FRESH, "track": 2000000042, "title": "Episode 42 (re-upload)", "released": "2026-11-20T08:00:00Z"}),
+])
+def test_the_same_episode_under_a_fresh_guid_takes_no_second_slot(direct_vm, direct_bob, deal, item, apple_ep):
+    c, deal_id = deal
+    first = _deliver(direct_vm, c, deal_id, direct_bob)
+    assert c.get_read(first).verdict == "DELIVERED"
+    rd = c.get_read(_deliver(direct_vm, c, deal_id, direct_bob, guid=FRESH, feed=_feed([_item(), item]), apple=_apple([apple_ep])))
+    assert (rd.verdict, rd.code, rd.state, int(rd.price)) == ("INELIGIBLE", "already_delivered", "refused", 0)
+    assert first in rd.why
+    d = c.get_deal(deal_id)
+    assert (int(d.budget), int(d.reserved), int(d.n_delivered)) == (PRICE, PRICE, 1)
+    _balance(c)
+
+
+def test_a_different_episode_still_takes_the_next_slot(direct_vm, direct_bob, deal):
+    c, deal_id = deal
+    _deliver(direct_vm, c, deal_id, direct_bob)
+    other = _item(guid="ep-43", title="Episode 43: listener mail", pub="Sat, 21 Nov 2026 18:00:00 +1000",
+                  audio="https://cdn.example.fm/ep43.mp3")
+    apple = _apple([{"guid": "ep-43", "track": 1000000043, "title": "Episode 43: listener mail", "released": "2026-11-21T08:00:00Z"}])
+    rd = c.get_read(_deliver(direct_vm, c, deal_id, direct_bob, guid="ep-43", feed=_feed([_item(), other]), apple=apple))
+    assert rd.verdict == "DELIVERED" and int(c.get_deal(deal_id).n_delivered) == 2
+
+
+def test_confirmation_refuses_a_guid_that_now_points_to_another_episode(direct_vm, direct_deploy, direct_alice, direct_bob):
+    c, deal_id, read_id = _delivered(direct_vm, direct_deploy, direct_alice, direct_bob)
+    swapped = _item(title="Episode 44: a new read", pub="Sun, 22 Nov 2026 18:00:00 +1000", audio="https://cdn.example.fm/ep44.mp3")
+    apple = _apple([{"guid": GUID, "track": 1000000044, "title": "Episode 44: a new read", "released": "2026-11-22T08:00:00Z"}])
+    _setup(direct_vm, feed=_feed([swapped]), apple=apple)
+    assert c.confirm(read_id) == "reverted"
+    r = json.loads(c.get_read(read_id).confirm_json)
+    assert (r["code"], r["same_episode"]) == ("different_episode", False)
+    _balance(c)
 
 
 # --- closing ---------------------------------------------------------------------------------------------------------------

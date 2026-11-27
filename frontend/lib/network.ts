@@ -45,7 +45,7 @@ export const NETWORKS: Record<NetworkId, Network> = {
     rpc: "https://studio.genlayer.com/api",
     readRpc: "https://studio.genlayer.com/api",
     explorer: "https://explorer-studio.genlayer.com",
-    contract: process.env.NEXT_PUBLIC_STUDIO_CONTRACT || "0xB813297AbF3Ec4fDe08663EE6520F746cc983eDe",
+    contract: process.env.NEXT_PUBLIC_STUDIO_CONTRACT || "0xe22705C4D38ce2dd6df160F650770606F3851042",
     faucet: "",
     rateLimited: true,
   },

@@ -70,7 +70,7 @@ const WRITE_EFFECT: Record<string, string> = {
 const READS = new Set(["open_deal", "deliver", "confirm", "dispute", "claim"]);
 
 // Time each validator phase may take (seconds, 30 to 600): reading a feed, Apple and a transcript takes longer.
-const BRADBURY_TIME = { open_deal: 300n, deliver: 400n, confirm: 300n, dispute: 400n, claim: 200n } as Record<string, bigint>;
+const BRADBURY_TIME = { open_deal: 300n, deliver: 400n, confirm: 400n, dispute: 400n, claim: 200n } as Record<string, bigint>;
 const WITHDRAW_GAS = 100_000n;
 const WITHDRAW_GAS_PRICE = 2_000_000_000n;
 

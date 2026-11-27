@@ -37,7 +37,7 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // GenLayer Studio (since 2026-11-24) needs a fee distribution with every transaction (genlayer-js 2.0): time each
 // validator phase may take, in seconds; reading a feed, Apple and a transcript gets more.
-const TIME = { open_deal: 300n, deliver: 400n, confirm: 300n, dispute: 400n, claim: 200n };
+const TIME = { open_deal: 300n, deliver: 400n, confirm: 400n, dispute: 400n, claim: 200n };
 export async function feesFor(c, functionName) {
   const est = await c.estimateTransactionFees({ leaderTimeunitsAllocation: TIME[functionName] ?? 120n, validatorTimeunitsAllocation: TIME[functionName] ?? 120n });
   return { distribution: est.distribution, feeValue: est.feeValue };

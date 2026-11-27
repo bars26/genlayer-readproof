@@ -46,6 +46,7 @@ export interface Read {
   host_share: Num;
   host_wallet: string;
   reading_json: string;
+  keys_json: string;
   confirm_json: string;
   disputed_by: string;
   dispute_json: string;
@@ -58,7 +59,9 @@ export interface Reading {
     title: string;
     published: string;
     show: string;
-    apple?: { guid: string; title: string; released: string; audio?: string; by?: "guid" | "audio" | "title" };
+    audio?: string;
+    wallet?: string;
+    apple?: { guid: string; track?: string; title: string; released: string; audio?: string; by?: "guid" | "audio" | "title" };
     transcript?: { url: string; type: string };
     transcript_chars?: number;
     transcript_sha256?: string;
@@ -72,13 +75,12 @@ export interface Reading {
   packet_sha256?: string;
 }
 
-export interface Recheck {
-  in_feed: boolean;
-  wallet: string;
-  mentions: number;
-  code_found: boolean;
-  same: boolean;
-  read_at?: string;
+/** A confirmation: the whole ruling made again on the episode as published now (see the contract's confirm). */
+export interface Recheck extends Reading {
+  state?: "ok" | "none" | "error";
+  stands: boolean;
+  same_episode: boolean;
+  transcript_changed: boolean;
 }
 
 /** What the app's checker (no validators, no model) finds for a show: see app/api/show. */
@@ -155,7 +157,7 @@ export const STATE_TEXT: Record<ReadState, string> = {
   held: "Price reserved until the episode has stood the survival period",
   paid: "Paid to the GenLayer wallet the show's feed declares",
   awaiting_wallet: "Confirmed: the price waits for the show to declare a GenLayer wallet in its feed",
-  reverted: "The episode or the read was gone at confirmation: the price went back to the deal",
+  reverted: "Made again at confirmation, the ruling no longer stood: the price went back to the deal",
   disputed: "Disputed and upheld: the disputer got the stake back plus 10%, the rest went back to the deal",
   returned: "Never claimed: the price went back to the sponsor",
   refused: "Nothing reserved; the episode can be submitted again",
@@ -169,6 +171,10 @@ export const CODE_LABEL: Record<string, string> = {
   date_mismatch: "feed and Apple dates differ",
   no_transcript: "no transcript in a readable format",
   transcript_unreadable: "transcript could not be read",
+  transcript_gone: "transcript no longer published",
+  already_delivered: "this episode already delivered a read for the deal",
+  different_episode: "the guid now points to another episode",
+  gone_from_feed: "episode gone from the feed",
   no_mention: "transcript never names the sponsor",
   no_code: "promo code not in the transcript",
   not_a_read: "named, but not in a sponsor message",

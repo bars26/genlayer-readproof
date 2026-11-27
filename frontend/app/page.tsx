@@ -111,7 +111,8 @@ export default function HomePage() {
                 <p>
                   <strong>The episode, from both.</strong> The submitted guid must be in the show&apos;s own feed, published inside the window, and
                   Apple must list the same episode (by guid, by audio file, or by title within two days) with a date within two days of the
-                  feed&apos;s. A backdated or invented episode does not match.
+                  feed&apos;s. A backdated or invented episode does not match. A deal pays one read per episode: an episode already
+                  delivered does not take a second slot under a new guid (Apple&apos;s episode id, the audio file and the dated title all count).
                 </p>
                 <p>
                   <strong>The transcript, in code first.</strong> The episode&apos;s Podcasting 2.0 transcript (WebVTT, SRT, JSON, text or HTML) is
@@ -122,9 +123,10 @@ export default function HomePage() {
                   message (not a passing or mocking mention) and which talking points it conveys. Every validator must reach the same answers.
                 </p>
                 <p>
-                  <strong>It must stay up.</strong> The price is reserved, then paid once the episode has stood the survival period and is still in
-                  the feed with the read in its transcript. Anyone can dispute before that with 10% of the price at stake: validators make the
-                  whole ruling again; upheld pays the disputer, dismissed pays the show.
+                  <strong>It must stay up.</strong> The price is reserved, then paid once the episode has stood the survival period. At
+                  confirmation validators make the whole ruling again on the episode as published then, model included, on whatever transcript
+                  it links now: still the same episode, still a sponsor message with every talking point. Anyone can dispute before that with
+                  10% of the price at stake: upheld pays the disputer, dismissed pays the show (unless the read fails at confirmation).
                 </p>
                 <p>
                   <strong>The show is paid where it says.</strong> The price goes to the GenLayer wallet the show declares in its own feed

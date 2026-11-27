@@ -29,8 +29,12 @@ records every episode a show publishes. ReadProof turns that into a contract:
 4. A **delivered** read **reserves** the price. Until confirmation, anyone may **dispute** it with 10% of the price at
    stake: validators make the whole ruling again. Upheld: the stake back plus 10% of the price, the rest returns to the
    deal. Dismissed: the stake is paid to the show with the price.
-5. Once the episode has **stood the survival period**, anyone **confirms**: validators read the feed and the transcript
-   again (still there, still naming the sponsor, code still in it). The show is paid at the **GenLayer wallet it declares
+5. Once the episode has **stood the survival period**, anyone **confirms**: validators make the **whole ruling again**
+   on the episode as published now (feed, Apple, whatever transcript the episode links now, brand, code and the model's
+   reading: still a sponsor message conveying every talking point) and check it is **still the episode that was
+   delivered** (Apple's episode id, the audio file or the dated title). A changed transcript link or a dismissed dispute
+   skips nothing; if the read no longer stands the price returns to the deal and a dismissed disputer's stake to the
+   disputer. The show is paid at the **GenLayer wallet it declares
    in its own feed**, `<podcast:txt purpose="genlayer">0x…</podcast:txt>` (the Podcasting 2.0 tag made for ownership
    proofs) or a "GenLayer wallet: 0x…" line in its description; until it does, the price is **held** for it and anyone
    can send it once the wallet appears. GEN leaves the contract only through `withdraw()`, to the caller.
@@ -39,8 +43,10 @@ records every episode a show publishes. ReadProof turns that into a contract:
 example) to see, without a wallet, its latest episodes, whether Apple lists them, their transcripts, and where a
 sponsor is named; then book reads or submit an episode with MetaMask on GenLayer Studio and **Test GEN** from the header.
 
-**Contract (GenLayer Studio):** [`0xB813297AbF3Ec4fDe08663EE6520F746cc983eDe`](https://explorer-studio.genlayer.com/address/0xB813297AbF3Ec4fDe08663EE6520F746cc983eDe)
-(`node scripts/verify-code.mjs 0xB813297AbF3Ec4fDe08663EE6520F746cc983eDe` checks it is byte-identical to `contracts/read_proof.py`).
+**Contract (GenLayer Studio), v1.1:** [`0xe22705C4D38ce2dd6df160F650770606F3851042`](https://explorer-studio.genlayer.com/address/0xe22705C4D38ce2dd6df160F650770606F3851042)
+(`node scripts/verify-code.mjs 0xe22705C4D38ce2dd6df160F650770606F3851042` checks it is byte-identical to `contracts/read_proof.py`).
+The v1 run below used [`0xB813297AbF3Ec4fDe08663EE6520F746cc983eDe`](https://explorer-studio.genlayer.com/address/0xB813297AbF3Ec4fDe08663EE6520F746cc983eDe),
+deployed from commit `aa5c52c`; what changed in v1.1 is under [v1.1: review fixes](#v11-review-fixes).
 
 ## Why GenLayer
 
@@ -79,6 +85,41 @@ quote and reconciliation is in [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md).
   an episode sent to the wrong deal was refused (`points_missing`) and their dispute of a demo read was dismissed.
   Eight transactions, all finalized; the books matched afterwards.
 
+## v1.1: review fixes
+
+A steward asked that confirmation enforce the paid sponsor message and talking points (also after the transcript link
+changes or a dispute was dismissed), and that a deal pay one read per underlying episode across changed RSS guids and
+the audio/title fallback matches. Both are in [`contracts/read_proof.py`](contracts/read_proof.py):
+
+- **Confirmation makes the whole ruling again.** `confirm()` no longer only looks for the brand and the code: it runs
+  `read_delivery()` again, as `deliver()` and `dispute()` do, on the episode as published now: the feed, Apple's
+  directory, whatever transcript the episode links *now*, the brand, the code, and the model's reading of the passages.
+  The price is released only if the verdict is still `DELIVERED` (a sponsor message conveying every talking point).
+  A dismissed dispute does not exempt the read: if it fails at confirmation the price returns to the deal and the
+  disputer gets the stake back. The confirmation records `transcript_changed`, `same_episode` and `stands`.
+- **One read per underlying episode.** `episode_keys()` lists what identifies the episode a reading corroborated: the
+  feed's guid, Apple's episode id (`trackId`) and guid, the audio file (the feed's and Apple's, query stripped) and the
+  title on its publication day. A delivered read stores them all under its deal; a later reading that shares any of them
+  is ruled `INELIGIBLE` `already_delivered` and reserves nothing. At confirmation the guid must still lead to the same
+  episode (Apple's id, the audio file or the dated title), else `different_episode`.
+
+Regression tests (`tests/direct/test_read_proof.py`, 69 in all):
+
+| Test | Shows |
+|---|---|
+| `test_confirmation_judges_the_sponsor_message_again` | the paid message removed while the brand and the code stay in the transcript: `reverted` (`not_a_read`); a recut read that drops a talking point: `reverted` (`points_missing`) |
+| `test_a_changed_transcript_link_is_judged_too` | the episode now links another transcript: without the paid message, `reverted`; with it, judged the same way and paid |
+| `test_a_dismissed_dispute_does_not_skip_the_confirmation_reading` | dispute dismissed, then the message cut: `reverted`, the stake back to the disputer, books balanced |
+| `test_the_same_episode_under_a_fresh_guid_takes_no_second_slot` | a fresh guid matched by Apple's audio file, by title (same Apple record), after Apple re-ingested it (same Apple id), or with everything at Apple changed but the same audio file: `already_delivered`, no slot taken |
+| `test_a_different_episode_still_takes_the_next_slot` | a genuinely different episode is not caught by mistake |
+| `test_confirmation_refuses_a_guid_that_now_points_to_another_episode` | the guid reused for a later episode: `reverted` (`different_episode`) |
+
+**Verified live on Studio** (`scripts/v11-check.mjs`, [`docs/v11-run.json`](docs/v11-run.json)) with a demo Gamut deal on
+Podnews Daily: the 20 Nov and 23 Nov episodes `DELIVERED` (two different episodes, two slots; stored keys include Apple
+ids `1000803110173` and `1000803578432`); the 20 Nov episode submitted again was refused; a dispute of it was
+`DISMISSED`; both confirmations made the whole ruling again (`DELIVERED`, all three talking points, same episode) and
+held the price for the show's wallet. `totals()` matched the contract's balance before and after.
+
 ## Who can do what (and the attacks this blocks)
 
 | Rule | Why |
@@ -87,9 +128,9 @@ quote and reconciliation is in [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md).
 | The episode must be in the feed, inside the window, and on Apple within two days of the feed's date | A backdated, invented or edited-in episode does not count |
 | Brand and code are found in code; the model judges only passages around the brand | The model cannot invent a mention, and sees a few thousand characters, not the whole episode |
 | Every talking point must be conveyed, in a sponsor message | A passing, mocking or partial mention is not paid |
-| One read per episode per deal; at most the booked number of reads | No double payment |
+| One read per underlying episode per deal: a delivered read records the feed guid, Apple's episode id and guid, the audio file and the dated title, and any of them seen again is `already_delivered` | The same episode re-published under a fresh guid cannot take a second slot |
 | The budget stays committed until the window and 14 days have passed | The sponsor cannot pull out after the host has read |
-| A delivered read is paid only after the survival period, if the episode and the read are still there | An episode pulled or recut after submission is not paid |
+| A delivered read is paid only after the survival period, after the whole ruling is made again (model included) on the transcript the episode links then, and only if it is still the same episode | Removing the paid message while keeping the brand or code, swapping the transcript link, or reusing the guid for another episode releases nothing |
 | Disputes stake 10% of the price; dismissed stakes pay the show | Challenging a good read costs the challenger |
 | The show is paid only at the wallet its own feed declares; two different addresses count as none | Nobody can redirect a show's payment |
 | Unreadable feeds, Apple outages and missing transcripts decide nothing (`UNCLEAR` or refused) | An outage never decides a payout; the episode can be submitted again |
@@ -101,7 +142,7 @@ quote and reconciliation is in [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md).
 ```bash
 python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 genvm-lint check contracts/read_proof.py
-python -m pytest tests/direct -q                          # 58 direct-mode tests (feeds, Apple, transcripts and the model mocked)
+python -m pytest tests/direct -q                          # 69 direct-mode tests (feeds, Apple, transcripts and the model mocked)
 npm install                                               # genlayer-js 2.0 (Studio charges a fee distribution on every transaction)
 node scripts/deploy.mjs                                   # deploys to GenLayer Studio, prints the address
 DEMO_KEYS=<file> node scripts/demo.mjs <address>          # the live run; writes docs/demo-run.json

@@ -81,8 +81,11 @@ function ReadRow({ read: r, deal }: { read: Read; deal: Deal }) {
       )}
       {confirm && (
         <p className="text-xs text-muted-foreground">
-          Confirmed at {confirm.read_at?.replace("T", " ")} UTC: episode {confirm.in_feed ? "still in the feed" : "gone from the feed"}, {confirm.mentions} mention
-          {confirm.mentions === 1 ? "" : "s"} in the transcript; wallet in the feed {confirm.wallet ? short(confirm.wallet) : "not declared yet"}.
+          Confirmed at {confirm.read_at?.replace("T", " ")} UTC, the whole ruling made again:{" "}
+          {confirm.stands
+            ? `still a sponsor message with every talking point, same episode${confirm.transcript_changed ? " (on a new transcript link)" : ""}`
+            : `it no longer stands (${CODE_LABEL[confirm.code ?? ""] ?? confirm.code ?? "gone"})`}
+          ; wallet in the feed {confirm.facts?.wallet ? short(confirm.facts.wallet) : "not declared yet"}.
         </p>
       )}
       <p className="text-xs text-muted-foreground">

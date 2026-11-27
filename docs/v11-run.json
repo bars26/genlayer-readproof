@@ -1,0 +1,198 @@
+{
+  "network": "studio",
+  "contract": "0xe22705C4D38ce2dd6df160F650770606F3851042",
+  "accounts": {
+    "sponsor": "0xB3a2de526B0260775Fb313A0Ced0E222e1BD8482",
+    "producer": "0x98Fc2913693B362aDfC26CA304C62299dB4d5d8f",
+    "listener": "0x781a2a87863c3c200748CbBC84d590cdCE7A858f"
+  },
+  "deal": {
+    "apple_id": "1325018583",
+    "brand": "Gamut Podcast Network",
+    "budget": 0,
+    "code": "",
+    "end": "2026-11-30",
+    "feed": "https://podnews.net/rss",
+    "history_json": "[{\"at\": \"2026-11-27T18:06:38\", \"budget\": \"200000000000000000\", \"event\": \"opened\", \"wallet_in_feed\": \"none\"}, {\"at\": \"2026-11-27T18:06:49\", \"code\": \"delivered\", \"event\": \"submitted\", \"read\": \"read_0\", \"verdict\": \"DELIVERED\"}, {\"at\": \"2026-11-27T18:07:09\", \"code\": \"delivered\", \"event\": \"submitted\", \"read\": \"read_1\", \"verdict\": \"DELIVERED\"}, {\"at\": \"2026-11-27T18:08:47\", \"event\": \"dispute_dismissed\", \"read\": \"read_0\"}, {\"at\": \"2026-11-27T18:09:12\", \"event\": \"confirmed\", \"read\": \"read_0\", \"state\": \"awaiting_wallet\"}, {\"at\": \"2026-11-27T18:09:37\", \"event\": \"confirmed\", \"read\": \"read_1\", \"state\": \"awaiting_wallet\"}]",
+    "id": "deal_0",
+    "n_delivered": 2,
+    "n_submitted": 2,
+    "paid_total": 0,
+    "points_json": "[\"top 10 network reach\", \"a team that actually emails you back\", \"talk to them if your show should be making more money\"]",
+    "price": "100000000000000000",
+    "reserved": 0,
+    "returned_total": 0,
+    "show": "Podnews Daily - podcast industry and podcasting news",
+    "slots": 2,
+    "sponsor": "0xb3a2de526b0260775fb313a0ced0e222e1bd8482",
+    "start": "2026-11-01",
+    "state": "open",
+    "survival_days": 1
+  },
+  "reads": {
+    "read_0": {
+      "bonus": "10000000000000000",
+      "code": "delivered",
+      "confirm_json": "{\"code\": \"delivered\", \"facts\": {\"apple\": {\"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261120.mp3\", \"by\": \"guid\", \"guid\": \"https://podnews.net/update/night-vale-perfume\", \"released\": \"2026-11-20T11:33:00\", \"title\": \"Smell like the podcast you listen to\", \"track\": \"1000803110173\"}, \"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261120.mp3\", \"guid\": \"https://podnews.net/update/night-vale-perfume\", \"mentions\": 3, \"published\": \"2026-11-20T11:33:00\", \"show\": \"Podnews Daily - podcast industry and podcasting news\", \"title\": \"Smell like the podcast you listen to\", \"transcript\": {\"type\": \"text/vtt\", \"url\": \"https://podnews.net/audio/podnews261120.mp3.vtt\"}, \"transcript_chars\": 5187, \"transcript_sha256\": \"2c50d7922bf6b9a2239c016baa979a1211d65f12ffa86e8bdf61909aa59abf63\", \"wallet\": \"\"}, \"judged\": {\"ad_read\": true, \"points\": [true, true, true], \"quote\": \"Do you want top 10 network reach and a team that actually emails you back? Gamut does both. If your show should be making more money, you should talk to them.\"}, \"read_at\": \"2026-11-27T18:09:12\", \"same_episode\": true, \"stands\": true, \"state\": \"ok\", \"transcript_changed\": false, \"verdict\": \"DELIVERED\"}",
+      "deal_id": "deal_0",
+      "dispute_json": "{\"code\": \"delivered\", \"facts\": {\"apple\": {\"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261120.mp3\", \"by\": \"guid\", \"guid\": \"https://podnews.net/update/night-vale-perfume\", \"released\": \"2026-11-20T11:33:00\", \"title\": \"Smell like the podcast you listen to\", \"track\": \"1000803110173\"}, \"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261120.mp3\", \"guid\": \"https://podnews.net/update/night-vale-perfume\", \"mentions\": 3, \"published\": \"2026-11-20T11:33:00\", \"show\": \"Podnews Daily - podcast industry and podcasting news\", \"title\": \"Smell like the podcast you listen to\", \"transcript\": {\"type\": \"text/vtt\", \"url\": \"https://podnews.net/audio/podnews261120.mp3.vtt\"}, \"transcript_chars\": 5187, \"transcript_sha256\": \"2c50d7922bf6b9a2239c016baa979a1211d65f12ffa86e8bdf61909aa59abf63\", \"wallet\": \"\"}, \"judged\": {\"ad_read\": true, \"points\": [true, true, true], \"quote\": \"Do you want top 10 network reach and a team that actually emails you back? Gamut does both. If your show should be making more money, you should talk to them.\"}, \"read_at\": \"2026-11-27T18:08:47\", \"state\": \"ok\", \"verdict\": \"DELIVERED\"}",
+      "disputed_by": "0x781a2a87863c3c200748cbbc84d590cdce7a858f",
+      "guid": "https://podnews.net/update/night-vale-perfume",
+      "held_until": "2026-11-21T11:33:00",
+      "host_share": "110000000000000000",
+      "host_wallet": "",
+      "id": "read_0",
+      "keys_json": "[\"guid:https://podnews.net/update/night-vale-perfume\", \"apple:1000803110173\", \"audio:https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261120.mp3\", \"title:smell like the podcast you listen to|2026-11-20\"]",
+      "price": "100000000000000000",
+      "published": "2026-11-20T11:33:00",
+      "reading_json": "{\"code\": \"delivered\", \"facts\": {\"apple\": {\"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261120.mp3\", \"by\": \"guid\", \"guid\": \"https://podnews.net/update/night-vale-perfume\", \"released\": \"2026-11-20T11:33:00\", \"title\": \"Smell like the podcast you listen to\", \"track\": \"1000803110173\"}, \"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261120.mp3\", \"guid\": \"https://podnews.net/update/night-vale-perfume\", \"mentions\": 3, \"published\": \"2026-11-20T11:33:00\", \"show\": \"Podnews Daily - podcast industry and podcasting news\", \"title\": \"Smell like the podcast you listen to\", \"transcript\": {\"type\": \"text/vtt\", \"url\": \"https://podnews.net/audio/podnews261120.mp3.vtt\"}, \"transcript_chars\": 5187, \"transcript_sha256\": \"2c50d7922bf6b9a2239c016baa979a1211d65f12ffa86e8bdf61909aa59abf63\", \"wallet\": \"\"}, \"judged\": {\"ad_read\": true, \"points\": [true, true, true], \"quote\": \"Do you want top 10 network reach and a team that actually emails you back? Gamut does both. If your show should be making more money, you should talk to them.\"}, \"packet_sha256\": \"a6ee0979689a3811a645d9203e89beb92c053a27e35ca7b4bdfebaad836fbfa1\", \"read_at\": \"2026-11-27T18:06:49\", \"state\": \"ok\", \"verdict\": \"DELIVERED\"}",
+      "state": "awaiting_wallet",
+      "submitted_at": "2026-11-27T18:06:49",
+      "submitter": "0x98fc2913693b362adfc26ca304c62299db4d5d8f",
+      "title": "Smell like the podcast you listen to",
+      "verdict": "DELIVERED",
+      "why": "DELIVERED: The episode carries the sponsor message the deal asked for, and Apple's directory lists it on the same date. \"Smell like the podcast you listen to\" (Podnews Daily - podcast industry and podcasting news), published 2026-11-20 11:33:00 UTC. The read: \"Do you want top 10 network reach and a team that actually emails you back? Gamut does both. If your show should be making more money, you should talk to them.\""
+    },
+    "read_1": {
+      "bonus": 0,
+      "code": "delivered",
+      "confirm_json": "{\"code\": \"delivered\", \"facts\": {\"apple\": {\"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261123.mp3\", \"by\": \"guid\", \"guid\": \"https://podnews.net/update/bouvard-leaves-westwood-one\", \"released\": \"2026-11-23T10:56:37\", \"title\": \"Pierre Bouvard leaves Westwood One\", \"track\": \"1000803578432\"}, \"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261123.mp3\", \"guid\": \"https://podnews.net/update/bouvard-leaves-westwood-one\", \"mentions\": 3, \"published\": \"2026-11-23T10:56:37\", \"show\": \"Podnews Daily - podcast industry and podcasting news\", \"title\": \"Pierre Bouvard leaves Westwood One\", \"transcript\": {\"type\": \"text/vtt\", \"url\": \"https://podnews.net/audio/podnews261123.mp3.vtt\"}, \"transcript_chars\": 4857, \"transcript_sha256\": \"4f580f847f9aaf97dc698b1b0c4a16a8e1530fb2f048b3314a4aefc757ab50bd\", \"wallet\": \"\"}, \"judged\": {\"ad_read\": true, \"points\": [true, true, true], \"quote\": \"Want top 10 network reach? And a team that actually emails you back. Gamut does both of those. If your show should be making more money, you should talk to them.\"}, \"read_at\": \"2026-11-27T18:09:37\", \"same_episode\": true, \"stands\": true, \"state\": \"ok\", \"transcript_changed\": false, \"verdict\": \"DELIVERED\"}",
+      "deal_id": "deal_0",
+      "dispute_json": "",
+      "disputed_by": "",
+      "guid": "https://podnews.net/update/bouvard-leaves-westwood-one",
+      "held_until": "2026-11-24T10:56:37",
+      "host_share": "100000000000000000",
+      "host_wallet": "",
+      "id": "read_1",
+      "keys_json": "[\"guid:https://podnews.net/update/bouvard-leaves-westwood-one\", \"apple:1000803578432\", \"audio:https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261123.mp3\", \"title:pierre bouvard leaves westwood one|2026-11-23\"]",
+      "price": "100000000000000000",
+      "published": "2026-11-23T10:56:37",
+      "reading_json": "{\"code\": \"delivered\", \"facts\": {\"apple\": {\"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261123.mp3\", \"by\": \"guid\", \"guid\": \"https://podnews.net/update/bouvard-leaves-westwood-one\", \"released\": \"2026-11-23T10:56:37\", \"title\": \"Pierre Bouvard leaves Westwood One\", \"track\": \"1000803578432\"}, \"audio\": \"https://op3.dev/e,pg=9b024349-ccf0-5f69-a609-6b82873eab3c/podnews.net/audio/podnews261123.mp3\", \"guid\": \"https://podnews.net/update/bouvard-leaves-westwood-one\", \"mentions\": 3, \"published\": \"2026-11-23T10:56:37\", \"show\": \"Podnews Daily - podcast industry and podcasting news\", \"title\": \"Pierre Bouvard leaves Westwood One\", \"transcript\": {\"type\": \"text/vtt\", \"url\": \"https://podnews.net/audio/podnews261123.mp3.vtt\"}, \"transcript_chars\": 4857, \"transcript_sha256\": \"4f580f847f9aaf97dc698b1b0c4a16a8e1530fb2f048b3314a4aefc757ab50bd\", \"wallet\": \"\"}, \"judged\": {\"ad_read\": true, \"points\": [true, true, true], \"quote\": \"And this podcast is sponsored by Gamut Podcast Network. Want top 10 network reach? And a team that actually emails you back. Gamut does both of those. If your show should be making more money, you should talk to them.\"}, \"packet_sha256\": \"626392ee8a07dc78db83bcc1aba4ff3f34e864dbd994c41de1cbedda7172ee5c\", \"read_at\": \"2026-11-27T18:07:09\", \"state\": \"ok\", \"verdict\": \"DELIVERED\"}",
+      "state": "awaiting_wallet",
+      "submitted_at": "2026-11-27T18:07:09",
+      "submitter": "0x98fc2913693b362adfc26ca304c62299db4d5d8f",
+      "title": "Pierre Bouvard leaves Westwood One",
+      "verdict": "DELIVERED",
+      "why": "DELIVERED: The episode carries the sponsor message the deal asked for, and Apple's directory lists it on the same date. \"Pierre Bouvard leaves Westwood One\" (Podnews Daily - podcast industry and podcasting news), published 2026-11-23 10:56:37 UTC. The read: \"And this podcast is sponsored by Gamut Podcast Network. Want top 10 network reach? And a team that actually emails you back. Gamut does both of those. If your show should be making more money, you sho\""
+    }
+  },
+  "readLabels": {
+    "read_0": "Podnews Daily, 20 Nov: Gamut read",
+    "read_1": "Podnews Daily, 23 Nov: Gamut read (another episode: takes the second slot)"
+  },
+  "reconciliations": [
+    {
+      "label": "two reads delivered",
+      "budgets": "0",
+      "reserved": "200000000000000000",
+      "held": "0",
+      "owed": "100000000000000000",
+      "expected": "300000000000000000",
+      "balance": "300000000000000000",
+      "ok": true
+    },
+    {
+      "label": "after the confirmations and the sponsor's withdrawal",
+      "budgets": "0",
+      "reserved": "0",
+      "held": "210000000000000000",
+      "owed": "0",
+      "expected": "210000000000000000",
+      "balance": "210000000000000000",
+      "ok": true
+    }
+  ],
+  "log": [
+    {
+      "who": "sponsor",
+      "call": "deposit()",
+      "value": "0.3",
+      "hash": "0xad24d5a9571efb9dd6da2706a989dede0c61a0f4071d4481612ebc283fbe0cc7",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "300000000000000000"
+    },
+    {
+      "who": "sponsor",
+      "call": "open_deal(\"https://podnews.net/rss\", \"1325018583\", \"Gamut Podcast Network\", \"\", \"top 10 network reach | a team that actually emails you back, \"2026-11-01\", \"2026-11-30\", 1, 0.1 GEN, 2)",
+      "value": "0",
+      "hash": "0xf396b05c8684e56f36f6bb4e05bd257f2fd657af3cc251dfdae5dd0423e21873",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "deal_0"
+    },
+    {
+      "who": "producer",
+      "call": "deliver(\"deal_0\", \"https://podnews.net/update/night-vale-perfume\")",
+      "value": "0",
+      "hash": "0xacf27cb30769db51b389d58b5f8c289847fa5f21b074f362dded140ddf3787c4",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "read_0"
+    },
+    {
+      "who": "producer",
+      "call": "deliver(\"deal_0\", \"https://podnews.net/update/bouvard-leaves-westwood-one\")",
+      "value": "0",
+      "hash": "0x119d19d051f728e3810f87f9c014f79455ffa396599bea402b5a57e2a69396b4",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "read_1"
+    },
+    {
+      "who": "producer",
+      "call": "deliver(\"deal_0\", \"https://podnews.net/update/night-vale-perfume\")",
+      "value": "0",
+      "hash": "0xcb66100e74c7f2e2288d145711496a926d86dda6df952adab44eeef640a61d8f",
+      "status": "ACCEPTED",
+      "exec": "ERROR",
+      "refused": "This episode already delivered a read for this deal (read_0)"
+    },
+    {
+      "who": "listener",
+      "call": "deposit()",
+      "value": "0.01",
+      "hash": "0x745cea9dec46ca67622b58851a8f62a75dc6c2cb49e373eaf5e41817efcf8515",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "10000000000000000"
+    },
+    {
+      "who": "listener",
+      "call": "dispute(\"read_0\")",
+      "value": "0",
+      "hash": "0x638682001e00b9c4760b9c9f77d7657acb811fbd7b8cb07474d4d59569ed7fd5",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "DISMISSED"
+    },
+    {
+      "who": "producer",
+      "call": "confirm(\"read_0\")",
+      "value": "0",
+      "hash": "0x852648fb8e74751cee349656eb309b27e89741a98c75c44580d2afe634ec3dda",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "awaiting_wallet"
+    },
+    {
+      "who": "producer",
+      "call": "confirm(\"read_1\")",
+      "value": "0",
+      "hash": "0xb7c362f2c944f667e7951423aeade1fd2ecdf694fc26b420b618167fc3385556",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "awaiting_wallet"
+    },
+    {
+      "who": "sponsor",
+      "call": "withdraw()",
+      "value": "0",
+      "hash": "0xa701f4800fc87423e73581705603fdb4cc251b23dedd9fa3a31c6fd2b75b2d3b",
+      "status": "ACCEPTED",
+      "exec": "SUCCESS",
+      "returned": "100000000000000000"
+    }
+  ]
+}
